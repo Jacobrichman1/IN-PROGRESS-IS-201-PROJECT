@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+        }
+        canvas {
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pong" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('pong');
+        const context = canvas.getContext('2d');
+
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        const ballSize = 10;
+
+        const player = { x: 0, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 0 };
+        const ai = { x: canvas.width - paddleWidth, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight };
+        const ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 4, dy: 4, size: ballSize };
+
+        function drawRect(x, y, width, height, color = 'white') {
+            context.fillStyle = color;
+            context.fillRect(x, y, width, height);
+        }
+
+        function drawBall(x, y, size, color = 'white') {
+            context.beginPath();
+            context.arc(x, y, size, 0, Math.PI * 2);
+            context.fillStyle = color;
+            context.fill();
+            context.closePath();
+        }
+
+        function drawNet() {
+            context.fillStyle = 'white';
+            for (let i = 0; i < canvas.height; i += 20) {
+                context.fillRect(canvas.width / 2 - 1, i, 2, 10);
+            }
+        }
+
+        function update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Ball collision with top and bottom walls
+            if (ball.y <= 0 || ball.y + ball.size >= canvas.height) {
+                ball.dy *= -1;
+            }
+
+            // Ball collision with player paddle
+            if (
+                ball.x <= player.x + player.width &&
+                ball.y >= player.y &&
+                ball.y <= player.y + player.height
+            ) {
+                ball.dx *= -1;
+            }
+
+            // Ball collision with AI paddle
+            if (
+                ball.x + ball.size >= ai.x &&
+                ball.y >= ai.y &&
+                ball.y <= ai.y + ai.height
+            ) {
+                ball.dx *= -1;
+            }
+
+            // Reset ball if it goes out of bounds
+            if (ball.x < 0 || ball.x > canvas.width) {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.dx *= -1;
+                ball.dy *= -1;
+            }
+
+            // AI paddle movement
+            ai.y += (ball.y - (ai.y + ai.height / 2)) * 0.1;
+
+            // Player paddle movement
+            player.y += player.dy;
+
+            // Prevent paddles from going out of bounds
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            ai.y = Math.max(0, Math.min(canvas.height - ai.height, ai.y));
+        }
+
+        function draw() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            drawNet();
+            drawRect(player.x, player.y, player.width, player.height);
+            drawRect(ai.x, ai.y, ai.width, ai.height);
+            drawBall(ball.x, ball.y, ball.size);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') player.dy = -6;
+            if (e.key === 'ArrowDown') player.dy = 6;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') player.dy = 0;
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
